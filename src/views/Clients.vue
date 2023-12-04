@@ -1,0 +1,1172 @@
+<template>
+    <div>
+        <base-header class="header pb-4 pt-2 pt-lg-4 d-flex align-items-center"
+                style="min-height: 50px; background-image: url(img/theme/clients.png); background-size: cover; background-position: center 45%;">
+            <!-- Mask -->
+            <span style="background-color:#172b4d !important" class="mask  opacity-7"></span>
+            <!-- Header container -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="text-absolute">
+                        <p class="mb-0 display-2 text-white">Clientes</p>
+                        <p class="text-white hideText">Sección dedicada a la administración de sus clientes, podrá enviar correos electrónicos y exportar en excel la base de datos de sus clientes.</p>
+                    </div>
+                    <base-button class="float-right mt-7 mr-0" size="sm" :disabled="validRoute('clientes', 'correos') ? false : true" @click="redirect()" type="primary">
+                        <a-icon type="mail" class="mr-2" style="vertical-align:1px;font-size:1.2em;" />
+                        Correos
+                    </base-button>
+                    <base-button class="float-right mt-7 mr-2" size="sm" :disabled="validRoute('clientes', 'registrar') ? false : true" @click="generateExcel" type="success">
+                        <a-icon type="file-excel" class="mr-2" style="vertical-align:1px;font-size:1.2em;" />
+                        Excel
+                    </base-button>
+                    <base-button class="float-right mt-7 mr-2" size="sm" :disabled="validRoute('clientes', 'registrar') ? false : true" @click="modals.modal1 = true , initialState(2)" type="success">
+                        <a-icon type="form" class="mr-2" style="vertical-align:1px;font-size:1.2em;" />
+                        Registrar
+                    </base-button>
+                </div>
+            </div>
+        </base-header>
+
+        <!-- MODAL REGISTRAR -->
+
+        <modal :show.sync="modals.modal1"
+               body-classes="p-0"
+               modal-classes="modal-dialog-centered modal-lg">
+               <h6 slot="header" class="modal-title p-0 m-0" id="modal-title-default"></h6>
+            <card type="secondary" shadow
+                  header-classes="bg-white pb-5"
+                  body-classes="px-lg-5 py-lg-5"
+                  class="border-0">
+                <template>
+                    <div style="margin-top:-15% !important" class="text-muted text-center mb-3">
+                        Datos del cliente
+                    </div>
+                </template>
+                <template>
+                    <tabs v-if="registerClient.valid2 == true" fill class="flex-column flex-md-row">
+                        <card shadow>
+                            <tab-pane>
+                                <span v-if="registerClient.valid2 == true" slot="title">
+                                    <i class="ni ni-collection"></i>
+                                    Básicos
+                                </span>
+                                <form role="form">
+                                    <div class="row mt-4">
+                                        <base-input alternative
+                                            class="mb-2 col-md-6"
+                                            placeholder="Nombre"
+                                            v-model="registerClient.firstName"
+                                            v-on:keyup="validRegister()"
+                                            addon-left-icon="ni ni-single-02"
+                                            addon-right-icon="fa fa-asterisk text-danger">
+                                        </base-input>
+                                        <base-input alternative
+                                            class="mb-2 col-md-6"
+                                            placeholder="Nombre"
+                                            v-model="registerClient.lastName"
+                                            v-on:keyup="validRegister()"
+                                            addon-left-icon="ni ni-single-02"
+                                            addon-right-icon="fa fa-asterisk text-danger">
+                                        </base-input>
+                                    </div>
+                                    
+                                    <base-input alternative
+                                                type="text"
+                                                class="mb-2"
+                                                placeholder="Correo"
+                                                v-model="registerClient.email"
+                                                v-on:keyup="validRegister()"
+                                                addon-left-icon="fa fa-address-card"
+                                                addon-right-icon="fa fa-asterisk text-danger">
+                                    </base-input>
+                                    <div class="col-12 mb-2 p-0">
+                                        <VuePhoneNumberInput v-model="registerClient.phone.formatNational" @update="registerClient.phone = $event, validRegister()"
+                                        :default-phoner-number="registerClient.phone.nationalNumber"
+                                        :default-country-code="registerClient.phone.countryCode"
+                                        :translations="{
+                                            countrySelectorLabel: 'Código de país',
+                                            countrySelectorError: 'Elije un país',
+                                            phoneNumberLabel: 'Número de teléfono',
+                                            example: 'Ejemplo :'
+                                        }"/>
+                                    </div>
+                                    <base-input class="mb-2" addon-left-icon="ni ni-calendar-grid-58">
+                                        <flat-picker 
+                                            slot-scope="{focus, blur}"
+                                            @on-open="focus"
+                                            @on-close="blur"
+                                            @on-change="validRegister()"
+                                            @on-input="validRegister()"
+                                            :config="configDate"
+                                            class="form-control datepicker"
+                                            placeholder="Seleccione una fecha de nacimiento"
+                                            v-model="registerClient.birthday">
+                                        </flat-picker>
+                                    </base-input>
+                                    <base-input alternative
+                                                type="text"
+                                                placeholder="Instagram"
+                                                v-model="registerClient.instagram"
+                                                addon-left-icon="fa fa-address-card"
+                                                addon-right-icon="fas fa-plus text-default">
+                                    </base-input>
+                                    <div class="text-center">
+                                        <base-button type="primary" v-if="registerClient.valid == false" disabled class="my-1">{{tipeForm}}</base-button>
+                                        <base-button type="primary" v-on:click="clientEdit()" v-else class="my-1">{{tipeForm}}</base-button>
+                                    </div>
+                                    
+                                </form>                                
+                            </tab-pane>
+                            <tab-pane v-if="registerClient.valid2 == true">
+                                <span slot="title">
+                                    <i class="ni ni-chart-bar-32"></i>
+                                    Avanzados
+                                </span>
+                                <div class="row">
+                                    <base-button v-if="registerClient.birthday" class="col-12 mt-3" type="secondary">
+                                        <span class="text-left">Fecha de nacimiento</span>
+                                        <badge class="text-default" type="success">{{registerClient.birthday | formatDate}}</badge>
+                                    </base-button>
+                                    <base-button class="col-12 mt-1" type="secondary">
+                                        <span>Participación</span>
+                                        <badge class="text-default" type="success">{{registerClient.attends}}</badge>
+                                    </base-button>
+                                    <base-button class="col-12 mt-1" type="secondary">
+                                        <span class="text-left">Recomendaciones</span>
+                                        <badge class="text-default" type="success">{{registerClient.recommendations}}</badge>
+                                    </base-button>
+                                    <base-button class="col-12 mt-1" type="secondary">
+                                        <span class="text-left">Recomendador</span>
+                                        <badge class="text-default" type="success">{{registerClient.recommender}}</badge>
+                                    </base-button>
+                                    <base-button class="col-12 mt-1" type="secondary">
+                                        <span>Cliente desde</span>
+                                        <badge class="text-default" type="success">{{registerClient.createdAt | formatDate}}</badge>
+                                    </base-button>
+                                    <base-button class="col-12 mt-1" type="secondary">
+                                        <span>Ultima atención</span>
+                                        <badge class="text-default" type="success">{{registerClient.lastAttend | formatDate}}</badge>
+                                    </base-button>
+                                </div>
+                            </tab-pane>
+                            <tab-pane v-if="registerClient.valid2 == true && validRoute('clientes', 'notes')">
+                                <span slot="title">
+                                    <a-icon type="file-done" class="mr-2" style="vertical-align:1px;font-size:1.2em;" />
+                                    Notas
+                                </span>
+                                <div class="row">
+                                    <div>
+                                        <vue-custom-scrollbar class="maxHeightDatesClient">
+                                            <a-config-provider :locale="es_ES">
+                                                <template #renderEmpty>
+                                                    <div style="text-align: center">
+                                                        <a-icon type="warning" style="font-size: 20px" />
+                                                        <h2>Este cliente no tiene notas registradas</h2>
+                                                    </div>
+                                                </template>
+                                                <a-table :scroll="getScreen" :loading="clientNotesState" :columns="notesClientColumn" :data-source="notesClient">
+                                                    <template slot="date-format" slot-scope="record, column">
+                                                        {{column.createdAt | formatDate}}
+                                                    </template>
+                                                </a-table>
+                                            </a-config-provider>
+                                        </vue-custom-scrollbar>
+                                        <div>
+                                            <h4>Ingresa nueva nota</h4>
+                                            <base-input alternative
+                                                type="text"
+                                                class="mb-2 pl-1"
+                                                placeholder="Creador de nota"
+                                                v-model="newNote.name"
+                                                addon-left-icon="ni ni-single-02">
+                                            </base-input>
+                                            <a-textarea class="ml-1" v-model="newNote.note" placeholder="Ingrese texto de la nota"/>
+                                        </div>
+                                        <base-button class="float-right mt-3" size="sm" @click="newNoteInsert(registerClient._id)" type="primary">
+                                            <a-icon type="form" class="mr-2" style="vertical-align:1px;font-size:1.2em;" />
+                                            Ingresar nota
+                                        </base-button>
+                                    </div>
+                                </div>
+                            </tab-pane>
+                        </card>
+                    </tabs>
+                    <form v-else role="form">
+                        <div class="row">
+                            <base-input alternative
+                                class="mb-3 col-md-6"
+                                placeholder="Nombre"
+                                v-model="registerClient.firstName"
+                                v-on:keyup="validRegister()"
+                                addon-left-icon="ni ni-single-02"
+                                addon-right-icon="fa fa-asterisk text-danger">
+                            </base-input>
+                            <base-input alternative
+                                class="mb-3 col-md-6"
+                                placeholder="Apellido"
+                                v-model="registerClient.lastName"
+                                v-on:keyup="validRegister()"
+                                addon-left-icon="ni ni-single-02"
+                                addon-right-icon="fa fa-asterisk text-danger">
+                            </base-input>
+                        </div>
+                        <base-input alternative
+                                    type="text"
+                                    placeholder="Correo"
+                                    v-model="registerClient.email"
+                                    v-on:keyup="validRegister()"
+                                    addon-left-icon="fa fa-address-card"
+                                    addon-right-icon="fa fa-asterisk text-danger">
+                        </base-input>
+                        
+                        <div class="col-12 mb-4 p-0">
+                            <VuePhoneNumberInput v-model="registerClient.phone.nationalNumber" 
+                                @update="registerClient.phone = $event, validRegister()" 
+                                :default-phoner-number="registerClient.phone.nationalNumber"
+                                :default-country-code="registerClient.phone.countryCode"
+                                :translations="{
+                                countrySelectorLabel: 'Código de país',
+                                countrySelectorError: 'Elije un país',
+                                phoneNumberLabel: 'Número de teléfono',
+                                example: 'Ejemplo :'
+                            }"/>
+                        </div>
+                        <span style="color:red;position:absolute;right:60px;top:160px;z-index:1;font-size:20px">*</span>
+                        <base-input alternative
+                                    type="text"
+                                    placeholder="Instagram"
+                                    v-model="registerClient.instagram"
+                                    addon-left-icon="fa fa-address-card"
+                                    addon-right-icon="fas fa-plus text-default">
+                        </base-input>
+                        <base-input addon-left-icon="ni ni-calendar-grid-58">
+                            <flat-picker 
+                                    slot-scope="{focus, blur}"
+                                    @on-open="focus"
+                                    @on-close="blur"
+                                    @on-change="validRegister()"
+                                    @on-input="validRegister()"
+                                    :config="configDate"
+                                    class="form-control datepicker"
+                                    placeholder="Seleccione una fecha de nacimiento"
+                                    v-model="registerClient.birthday">
+                            </flat-picker>
+                        </base-input>
+                        <base-checkbox v-model="registerClient.discount" class="mb-3">
+                            Descuento de nuevo cliente
+                        </base-checkbox>
+                        <vue-single-select
+                            v-model="registerClient.recommender"
+                            :options="clientsNames"
+                            placeholder="Recomendador"
+                        ></vue-single-select>
+                        <div class="text-center">
+                            <base-button type="primary" v-if="registerClient.valid == false" disabled class="my-4">{{tipeForm}}</base-button>
+                            <base-button type="primary" v-on:click="registerClients()" v-else class="my-4">{{tipeForm}}</base-button>
+                        </div>
+                        
+                    </form>
+            </template>
+            </card>
+        </modal>
+        <modal :show.sync="modals.modal2"
+               :gradient="modals.type"
+               modal-classes="modal-danger modal-dialog-centered">
+            <div class="py-3 text-center">
+                <i :class="modals.icon"></i>
+                <h1 class="heading mt-5">{{modals.message}}</h1>
+            </div>
+        </modal>
+        
+        <base-alert class="positionAlert" type="success" v-if="successRegister">
+            <strong>Registrado!</strong> Has registrado al cliente con exito!
+        </base-alert>
+        <a-modal v-model="modals.modal7" :width="widthTable" :footer="false">
+            <template>
+                <div class="text-muted text-center">
+                    <h3>Información de citas por asistir</h3>
+                </div>
+            </template>
+            <template>
+                <div>
+                    <vue-custom-scrollbar class="maxHeightDatesClient">
+                        <a-config-provider :locale="es_ES">
+                            <template #renderEmpty>
+                                <div style="text-align: center">
+                                    <a-icon type="warning" style="font-size: 20px" />
+                                    <h2>No posee citas por asistir</h2>
+                                </div>
+                            </template>
+                            <a-table :scroll="getScreen" :columns="datesClientColumn" :data-source="datesClient">
+                                <template slot="date-format" slot-scope="record, column">
+                                    {{column.createdAt | formatDate}}
+                                </template>
+                                <template slot="serviceName" slot-scope="record, column">
+                                    <span>{{column.services[0].name}}</span>
+                                </template>
+                                <template slot="date-format-init" slot-scope="record, column">
+                                    {{column.start.split(" ")[1]}}
+                                </template>
+                                <template slot="date-format-end" slot-scope="record, column">
+                                    {{column.end.split(" ")[1]}}
+                                </template>
+                            </a-table>
+                        </a-config-provider>
+                    </vue-custom-scrollbar>
+                </div>     
+            </template>
+        </a-modal>
+        <!-- TABLA DE CLIENTES -->
+        <template>
+            <a-config-provider :locale="es_ES">
+                <template #renderEmpty>
+                    <div style="text-align: center">
+                        <a-icon type="warning" style="font-size: 20px" />
+                        <h2>No hay ningún cliente registrado</h2>
+                    </div>
+                </template>
+                <a-table :columns="columns" :loading="clientState" :data-source="clients" :scroll="getScreen">
+                    <div
+                    slot="filterDropdown"
+                    slot-scope="{ setSelectedKeys, selectedKeys, confirm, clearFilters, column }"
+                    style="padding: 8px"
+                    >
+                    <a-input
+                        v-ant-ref="c => (searchInput = c)"
+                        :placeholder="`Buscar por ${column.title.toLowerCase()}`"
+                        :value="selectedKeys[0]"
+                        style="width: 188px; margin-bottom: 8px; display: block;"
+                        @change="e => setSelectedKeys(e.target.value ? [e.target.value] : [])"
+                        @pressEnter="() => handleSearch(selectedKeys, confirm, column.dataIndex)"
+                    />
+                    <a-button
+                        type="primary"
+                        icon="search"
+                        size="small"
+                        style="width: 90px; margin-right: 8px"
+                        @click="() => handleSearch(selectedKeys, confirm, column.dataIndex)"
+                    >
+                        Buscar
+                    </a-button>
+                    <a-button size="small" style="width: 90px" @click="() => handleReset(clearFilters)">
+                        Restablecer
+                    </a-button>
+                    </div>
+                    <a-icon
+                        slot="filterIcon"
+                        slot-scope="filtered"
+                        type="search"
+                        :style="{ color: filtered ? '#108ee9' : undefined }"
+                    />
+                    <template slot="birthday" slot-scope="record">
+                        <span v-if="record">{{record | formatDate}}</span>
+                        <span v-else>Sin fecha de nacimiento</span>
+                    </template>
+                    <template slot="actions" slot-scope="record, column">
+                        <b>
+                            <a-tooltip placement="left">
+                                <template slot="title">
+                                    <span>Citas por asistir</span>
+                                </template>
+                                <base-button v-if="validRoute('clientes', 'detalle')" icon="fa fa-address-card" size="sm" type="default" class="text-center" v-on:click="getDatesClient(column._id)"></base-button>
+                                <base-button v-else icon="fa fa-address-card" size="sm" type="default" disabled class="text-center" ></base-button>
+                            </a-tooltip>
+
+                            <a-tooltip placement="top">
+                                <template slot="title">
+                                <span>Detalles / Editar</span>
+                                </template>
+                                <base-button v-if="validRoute('clientes', 'detalle')" size="sm" type="default" @click="modals.modal1 = true , initialState(3), pushData(column.firstName, column.lastName, column.email, column.phone, column.instagram, column.attends, column.recommender, column.recommendations, column.lastAttend, column.createdAt, column._id, column.birthday)" icon="ni ni-bullet-list-67"></base-button>
+                                <base-button disabled v-else size="sm" type="default" icon="ni ni-bullet-list-67"></base-button>
+                            </a-tooltip>
+                            
+                            <a-tooltip placement="top">
+                                <template slot="title">
+                                <span>Eliminar</span>
+                                </template>
+                                <base-button v-if="validRoute('clientes', 'eliminar')" size="sm" v-on:click="deleteClient(column._id)" type="warning" icon="fas fa-trash"></base-button>
+                                <base-button disabled v-else size="sm" type="warning" icon="fas fa-trash"></base-button>
+                            </a-tooltip>
+                        </b>
+                    </template>
+                </a-table>
+            </a-config-provider>    
+        </template>
+        <!-- END -->
+
+    </div> 
+</template>
+
+<script>
+//Back - End 
+import axios from 'axios'
+import endPoint from '../../config-endpoint/endpoint.js'
+import VueBootstrap4Table from 'vue-bootstrap4-table'
+import EventBus from '../components/EventBus'
+import jwtDecode from 'jwt-decode'
+import router from '../router'
+import XLSX from 'xlsx'
+import io from 'socket.io-client';
+import flatPicker from "vue-flatpickr-component";
+import "flatpickr/dist/flatpickr.css";
+import {Spanish} from 'flatpickr/dist/l10n/es.js';
+import vueCustomScrollbar from 'vue-custom-scrollbar'
+// COMPONENTS
+import VuePhoneNumberInput from 'vue-phone-number-input';
+import 'vue-phone-number-input/dist/vue-phone-number-input.css';
+import es_ES from 'ant-design-vue/lib/locale-provider/es_ES';
+import mixinUserToken from '../mixins/mixinUserToken'
+import mixinES from '../mixins/mixinES'
+export default {
+    mixins: [mixinUserToken, mixinES],
+    components: {
+        VueBootstrap4Table,
+        flatPicker,
+        VuePhoneNumberInput,
+        vueCustomScrollbar
+    },
+    data() {
+      return {
+        progress:false,
+        auth: [],
+        successRegister:false,
+        clientsNames: [],
+        clientIds:[],
+        tipeForm: '',
+        configDate: {
+            allowInput: true, 
+            dateFormat: 'd-m-Y',
+            locale: Spanish
+        },
+        es_ES,
+        socket : io(endPoint.endpointTarget),
+        clientState: true,
+        phoneData: {isValid: false},
+        registerClient: {
+            firstName:'',
+            lastName:'',
+            email:'',
+            phone: {
+                "countryCode": "CL", 
+                "isValid": false, 
+                "phoneNumber": "", 
+                "countryCallingCode": "", 
+                "formattedNumber": "", 
+                "nationalNumber": "", 
+                "formatInternational": "", 
+                "formatNational": "", 
+                "uri": "", 
+                "e164": ""
+            },
+            instagram:'',
+            birthday: '',
+            recommender:null,
+            discount:false,
+            valid:false,
+            valid2:false,
+            recommendations: '',
+            lastAttend: '',
+            createdAt: '',
+            attends: 0,
+            _id: ''
+        },
+        datesClient: [],
+        datesClientColumn: [
+            {
+                title: 'Fecha',
+                dataIndex: 'createdAt',
+                key: 'createdAt',
+                scopedSlots: { customRender: 'date-format' },
+                defaultSortOrder: 'descend',
+                sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+                ellipsis: true,
+            },
+            { 
+                title: 'Inicio',
+                dataIndex: 'start',
+                key: 'start',
+                scopedSlots: { customRender: 'date-format-init' },
+            },
+            { 
+                title: 'Fin',
+                dataIndex: 'end',
+                key: 'end',
+                scopedSlots: { customRender: 'date-format-end' },
+            },
+            { 
+                title: 'Profesional',
+                dataIndex: 'employe.name',
+                key: 'employe.name'
+            },
+            {
+                title: 'Servicio',
+                dataIndex: 'services',
+                key: 'services',
+                scopedSlots: { customRender: 'serviceName' },
+                width: "40%"
+            }
+        ],
+        notesClient: [],
+        clientNotesState: false,
+        notesClientColumn: [
+            {
+                title: 'Fecha',
+                dataIndex: 'createdAt',
+                key: 'createdAt',
+                scopedSlots: { customRender: 'date-format' },
+                defaultSortOrder: 'descend',
+                sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+                ellipsis: true,
+            },
+            { 
+                title: 'Creador',
+                dataIndex: 'name',
+                key: 'name'
+            },
+            {
+                title: 'Nota',
+                dataIndex: 'note',
+                key: 'note',
+                width: '60%'
+            }
+        ],
+        modals: {
+            modal1: false,
+            modal2: false,
+            modal3: false,
+            modal7: false,
+            message: "",
+            icon: '',
+            type:''
+        },
+        configHeader: {
+            headers:{
+                "x-database-connect": endPoint.database,
+                'x-access-token':localStorage.userToken
+            }
+        },
+        clients: [],
+        searchText: '',
+        searchInput: null,
+        searchedColumn: '',
+        columns: [
+            {
+                title: 'Nombre',
+                dataIndex: 'firstName',
+                key: 'firstName',
+                width: '15%',
+                ellipsis: true,
+                sorter: (a, b) => {
+                     if (a.firstName > b.firstName) {
+                        return -1;
+                    }
+                    if (b.firstName > a.firstName) {
+                        return 1;
+                    }
+                    return 0;
+                },
+                sortDirections: ['descend', 'ascend'],
+                scopedSlots: {
+                    filterDropdown: 'filterDropdown',
+                    filterIcon: 'filterIcon',
+                    customRender: 'customRender',
+                },
+                onFilter: (value, record) => record.firstName.toString().toLowerCase().includes(value.toLowerCase()),
+                onFilterDropdownVisibleChange: visible => {
+                    if (visible) {
+                    setTimeout(() => {
+                        this.searchInput.focus();
+                    }, 0);
+                    }
+                },
+            },
+            {
+                title: 'Apellido',
+                dataIndex: 'lastName',
+                key: 'lastName',
+                width: '15%',
+                ellipsis: true,
+                sorter: (a, b) => {
+                     if (a.lastName > b.lastName) {
+                        return -1;
+                    }
+                    if (b.lastName > a.lastName) {
+                        return 1;
+                    }
+                    return 0;
+                },
+                scopedSlots: {
+                    filterDropdown: 'filterDropdown',
+                    filterIcon: 'filterIcon',
+                    customRender: 'customRender',
+                },
+                onFilter: (value, record) => record.lastName.toString().toLowerCase().includes(value.toLowerCase()),
+                onFilterDropdownVisibleChange: visible => {
+                    if (visible) {
+                    setTimeout(() => {
+                        this.searchInput.focus();
+                    }, 0);
+                    }
+                },
+            },
+            {
+                title: 'Correo electrónico',
+                dataIndex: 'email',
+                key: 'email',
+                width: '25%',
+                scopedSlots: {
+                    filterDropdown: 'filterDropdown',
+                    filterIcon: 'filterIcon',
+                    customRender: 'customRender',
+                },
+                onFilter: (value, record) => record.email.toString().toLowerCase().includes(value.toLowerCase()),
+                onFilterDropdownVisibleChange: visible => {
+                    if (visible) {
+                    setTimeout(() => {
+                        this.searchInput.focus();
+                    }, 0);
+                    }
+                },
+            },
+            {
+                title: 'Número telefónico',
+                dataIndex: 'phone.formatInternational',
+                key: 'phone',
+                ellipsis: true,
+                scopedSlots: {
+                    filterDropdown: 'filterDropdown',
+                    filterIcon: 'filterIcon',
+                    customRender: 'customRender',
+                },
+                onFilter: (value, record) => record.phone.formattedNumber.toLowerCase().includes(value.toLowerCase()),
+                onFilterDropdownVisibleChange: visible => {
+                    if (visible) {
+                    setTimeout(() => {
+                        this.searchInput.focus();
+                    }, 0);
+                    }
+                },
+            },
+            {
+                title: 'Fecha de cumpleaños',
+                dataIndex: 'birthday',
+                key: 'birthday',
+                ellipsis: true,
+                scopedSlots: { customRender: 'birthday' }
+            },
+            {
+                title: 'Acciones',
+                dataIndex: '_id',
+                key: '_id',
+                scopedSlots: { customRender: 'actions' }
+            }
+        ],
+        firstNameUser: '',
+        lastNameUser: '',
+        branch: '' ,
+        newNote: {
+            name: "",
+            note: ""
+        }
+      }
+    },
+    created(){
+		this.getClients();
+        this.getToken();
+        $(document).ready(function(){
+            $(".page-link").click(function(){
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+            });
+        });
+    },
+    methods: {
+        selectDate(date, dateString){
+            if (date) {
+                this.dateFind = dateString
+            }else{
+                this.dateFind = []
+            }
+        },
+        async getDatesClient(id){
+            this.datesClient = []
+            try {
+                const getDatesClient = await axios.get(endPoint.endpointTarget+'/clients/getDatesClient/'+id, this.configHeader)
+                if (getDatesClient.data.status == "ok") {
+                    this.datesClient = getDatesClient.data.data
+                    this.modals.modal7 = true
+                }else{
+                    this.modals.modal7 = true
+                }
+            } catch(err){
+                if (!err.response) {
+                    this.$swal({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }
+            }
+        },
+        newNoteInsert(id){
+            this.clientNotesState = true
+            axios.post(endPoint.endpointTarget+'/clients/insertNotesToClient', {
+                id: id,
+                note: {
+                    name: this.newNote.name,
+                    note: this.newNote.note,
+                    createdAt: new Date()
+                }
+            }, this.configHeader)
+            .then(res => {
+                if (res.data.status == "ok") {
+                    axios.get(endPoint.endpointTarget+'/clients/getNotesClient/'+id, this.configHeader)
+                    .then(res => {
+                        if (res.data.status == "ok") {
+                            this.notesClient = res.data.notes
+                            this.clientNotesState = false
+                            this.newNote.note = ""
+                            this.newNote.name = ""
+                        }
+                    })
+                }
+            })
+        },
+        getToken(){
+            const token = localStorage.userToken
+            const decoded = jwtDecode(token)  
+            this.auth = decoded.access
+            this.firstNameUser = localStorage.firstname  
+            this.lastNameUser = localStorage.lastname
+            this.branch = localStorage.branch
+        },
+        async getClients(){
+            this.progress = false
+            try {
+                const getAllClients = await axios.get(endPoint.endpointTarget+'/clients', this.configHeader)
+                if (getAllClients.data.data.length > 0) {
+                    this.clients = getAllClients.data.data
+                    for (let index = 0; index < getAllClients.data.data.length; index++) {
+                        this.clientsNames.push(getAllClients.data.data[index].firstName + " / " + getAllClients.data.data[index].email)
+                        this.clientIds.push(getAllClients.data.data[index].firstName + " / " + getAllClients.data.data[index].email + "-" + getAllClients.data.data[index]._id)
+                    }
+                    this.progress = true
+                    this.clientState = false
+                    EventBus.$emit('pageLoaded', true)
+                }else{
+                    this.clientState = false
+                    EventBus.$emit('pageLoaded', true)
+                }
+            }catch (err) {
+                EventBus.$emit('pageLoaded', true)
+                if (!err.response) {
+                    this.$swal({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }else if (err.response.status == 401) {
+                    this.$swal({
+                        icon: 'error',
+                        title: 'Session caducada',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    setTimeout(() => {
+                        router.push("login")
+                    }, 1550);
+                }
+            }
+        },
+        handleSearch(selectedKeys, confirm, dataIndex) {
+            confirm();
+            this.searchText = selectedKeys[0];
+            this.searchedColumn = dataIndex;
+        },
+        handleReset(clearFilters) {
+            clearFilters();
+            this.searchText = '';
+        },
+        generateExcel(){
+            var Data = []
+            for (let index = 0; index < this.clients.length; index++) {
+                const element = this.clients[index];
+                Data.push({Nombres: element.firstName +' '+ element.lastName, Email: element.email, 'Número de teléfono': element.phone ? element.phone.formatInternational : '', 'Instagram': element.instagram, Atenciones: element.attends, Recomendador: element.recommender, Recomendaciones: element.recommendations, 'Ultima atencion': this.$options.filters.formatDate(element.lastAttend), 'Fecha de nacimiento': this.$options.filters.formatDate(element.birthday), 'Cliente desde': this.$options.filters.formatDate(element.createdAt)})
+            }
+            var Datos = XLSX.utils.json_to_sheet(Data) 
+            var wb = XLSX.utils.book_new() 
+            XLSX.utils.book_append_sheet(wb, Datos, 'Datos') 
+            XLSX.writeFile(wb, 'Clientes.xlsx') 
+        },
+        registerClients(){
+            var ifCheck = this.registerClient.discount ? 0 : 1
+            var idRecomender = ''
+            if (this.registerClient.recommender != null) {
+                for (let i = 0; i < this.clientIds.length; i++) {
+                    const spId = this.clientIds[i].split("-")
+                    if (spId[0] == this.registerClient.recommender) {
+                        idRecomender = spId[1]
+                    } 
+                }
+            }
+            var date = this.registerClient.birthday
+            var validDate = true
+            if (this.registerClient.birthday != '') {
+                if (this.registerClient.birthday.split('-')[1]) {
+                    validDate = true
+                    var split = this.registerClient.birthday.split('-')
+                    date = split[1]+'-'+split[0]+'-'+split[2]
+                }else{
+                    validDate = false
+                    this.$swal({
+                        icon: 'error',
+                        title: 'Fecha invalida',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                } 
+            }
+            if(validDate){
+                axios.post(endPoint.endpointTarget+'/clients', {
+                    firstName:this.registerClient.firstName,
+                    lastName: this.registerClient.lastName,
+                    email:this.registerClient.email,
+                    recommender:this.registerClient.recommender,
+                    idRecomender:idRecomender,
+                    phone:this.registerClient.phone,
+                    birthday: date,
+                    instagram:this.registerClient.instagram,
+                    ifCheck: ifCheck
+                }, this.configHeader)
+                .then(res => {
+                    if (res.data.status == 'client create') {
+                        this.$swal({
+                            icon: 'success',
+                            title: 'Se registro el cliente con éxito',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                        
+                        this.initialState(1)
+                        this.getClients()
+                        // EventBus.$emit('reloadClients', 'reload')
+                    }else{
+                        this.$swal({
+                            icon: 'error',
+                            title: 'El cliente ya existe',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                    }
+                }).catch(err => {
+                    if (!err.response) {
+                        this.$swal({
+                            icon: 'error',
+                            title: 'Error de conexión',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                    }else if (err.response.status == 401) {
+                        this.$swal({
+                            icon: 'error',
+                            title: 'Session caducada',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                        setTimeout(() => {
+                            router.push("login")
+                        }, 1550);
+                    }
+                })
+            }  
+        },
+        validRegister(){
+            if (this.registerClient.firstName.length == 1) {
+                this.registerClient.firstName = this.registerClient.firstName.toUpperCase()
+            }
+            if (this.registerClient.lastName.length == 1) {
+                this.registerClient.lastName = this.registerClient.lastName.toUpperCase()
+            }
+            setTimeout(() => {
+                this.registerClient.valid = false
+                if (this.registerClient.firstName != '' && this.registerClient.lastName != '' && this.registerClient.email != '' && this.registerClient.phone.isValid && this.registerClient.birthday != '') {
+                    if (this.registerClient.email.split('@').length == 2) {
+                        if (this.registerClient.email.split('@')[1].split('.').length >= 2) {
+                            this.registerClient.valid = true
+                        }else{
+                            this.registerClient.valid = false
+                        }
+                    }else{
+                        this.registerClient.valid = false
+                    }
+                }
+                else {
+                    this.registerClient.valid = false
+                }
+            }, 200);
+        },
+        formatPhone(){
+            var number = this.registerClient.contactOne.replace(/[^\d]/g, '')
+            if (number.length == 9) {
+                number = number.replace(/(\d{1})(\d{4})/, "$1-$2-");
+            } else if (number.length == 10) {
+                number = number.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+            }
+            this.registerClient.contactOne = number
+        },
+        MaysPrimera(string){
+			return string.charAt(0).toUpperCase() + string.slice(1);
+        },
+        initialState(val){
+            this.registerClient = {
+                firstName:'',
+                lastName:'',
+                email:'',
+                phone: {
+                    "countryCode": "CL", 
+                    "isValid": false, 
+                    "phoneNumber": "", 
+                    "countryCallingCode": "", 
+                    "formattedNumber": "", 
+                    "nationalNumber": "", 
+                    "formatInternational": "", 
+                    "formatNational": "", 
+                    "uri": "", 
+                    "e164": ""
+                },
+                instagram:'',
+                birthday: '',
+                recommender:null,
+                discount:false,
+                valid:false,
+                valid2:false,
+                recommendations: '',
+                lastAttend: '',
+                createdAt: '',
+                attends: 0,
+                _id: ''
+            }
+            if (val == 1) {
+                this.modals = {
+                    modal1:false,
+                    modal2:false,
+                    modal3:false,
+                }
+            }
+            if (val == 2) {
+                this.tipeForm = 'Registrar'
+            }
+            if (val == 3) {
+                this.tipeForm = 'Editar'
+            }
+        },
+        pushData(firstName,lastName,email,phone,instagram,attends,recommender,recommendations,lastAttend,createdAt,_id, birthday){
+            this.notesClient = []
+            this.clientNotesState = true
+            this.registerClient =  {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: phone,
+                instagram: instagram,
+                birthday:  birthday,
+                recommender: recommender,
+                valid: true,
+                valid2: true,
+                recommendations: recommendations,
+                lastAttend: lastAttend,
+                createdAt: createdAt,
+                attends: attends,
+                _id: _id
+            }
+            axios.get(endPoint.endpointTarget+'/clients/getNotesClient/'+_id, this.configHeader)
+            .then(res => {
+                if (res.data.status == "ok") {
+                    this.notesClient = res.data.notes
+                    this.clientNotesState = false
+                }
+            })
+        },
+        deleteClient(id){
+			this.$swal({
+				title: '¿Está seguro de borrar el cliente?',
+				text: 'No puedes revertir esta acción',
+				type: 'warning',
+                icon: 'warning',
+				showCancelButton: true,
+				confirmButtonText: 'Estoy seguro',
+				cancelButtonText: 'No, evitar acción',
+				showCloseButton: true,
+				showLoaderOnConfirm: true
+			}).then((result) => {
+				if(result.value) {
+					axios.delete(endPoint.endpointTarget+'/clients/'+id, this.configHeader)
+					.then(res => {
+                        if (res.data.status == 'ok') {
+                            this.$swal({
+                                icon: 'success',
+                                title: 'Cliente borrado con éxito',
+                                showConfirmButton: false,
+                                timer: 1500
+                            })
+                            this.getClients();
+                            this.initialState(1)
+                            // EventBus.$emit('reloadClients', 'reload')
+						}
+					}).catch(err => {
+                        if (!err.response) {
+                            this.$swal({
+                                icon: 'error',
+                                title: 'Error de conexión',
+                                showConfirmButton: false,
+                                timer: 1500
+                            })
+                        }else if (err.response.status == 401) {
+                            this.$swal({
+                                icon: 'error',
+                                title: 'Session caducada',
+                                showConfirmButton: false,
+                                timer: 1500
+                            })
+                            setTimeout(() => {
+                                router.push("login")
+                            }, 1550);
+                        }
+                    })
+				}
+				else{
+                    this.$swal({
+                        icon: 'info',
+                        title: 'Acción cancelada',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+				}
+			})
+        },
+        clientEdit(){
+            axios.put(endPoint.endpointTarget+'/clients/'+this.registerClient._id, {
+                firstName: this.registerClient.firstName,
+                lastName: this.registerClient.lastName,
+                email: this.registerClient.email,
+                phone: this.registerClient.phone,
+                instagram: this.registerClient.instagram,
+                birthday: this.registerClient.birthday
+            },this.configHeader)
+            .then(res => {
+                if (res.data.status == 'update client') {
+                    this.$swal({
+                        icon: 'success',
+                        title: 'El cliente ha sido editado con éxito',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    this.getClients();
+                    this.initialState(1)
+                    // EventBus.$emit('reloadClients', 'reload')
+                }else{
+                    this.$swal({
+                        icon: 'error',
+                        title: 'El email ya existe',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }
+            }).catch(err => {
+                if (!err.response) {
+                    this.$swal({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }else if (err.response.status == 401) {
+                    this.$swal({
+                        icon: 'error',
+                        title: 'Session caducada',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    setTimeout(() => {
+                        router.push("login")
+                    }, 1550);
+                }
+            })
+        },
+        showFilter(){
+            $('.tableClient .vbt-table-tools').toggle()
+        },
+        validRoute(route, type){
+            for (let index = 0; index < this.auth.length; index++) {
+                const element = this.auth[index];
+                if (element.ruta == route) {
+                    for (let i = 0; i < element.validaciones.length; i++) {
+                        if (type == element.validaciones[i]) { 
+                            return true
+                        } 
+                    }
+                }
+            }
+        },
+        redirect(){
+            router.push({path: 'Correo'}) 
+		}
+    },
+    mounted (){
+        EventBus.$on('changeBranch/clientes', (status) => {
+            setTimeout(() => {
+                EventBus.$emit('pageLoaded', true)
+            }, 2000);
+        })
+    },
+    computed: {
+        getScreen: () => {
+            return screen.width < 780 ? { x: 'calc(700px + 50%)', y: 240 } : { y: 'auto' }
+        },
+        widthTable: () => {
+            return screen.width < 780 ? "95%" : "60%"
+        }
+    }
+  };
+</script>
+<style lang="scss">
+    .card-header{
+        font-size: 2.5vw;
+    }
+    .cursor-pointer{
+        cursor: pointer;
+    }
+    .positionAlert{
+        position: absolute;
+        top:14%;
+        left: 32%;
+        z-index: 100000;
+    }
+    .tableClient .vbt-table-tools{
+        display:none;
+    }
+    .tableClient .vbt-table-tools .vbt-global-search .form-group{
+        width: 30%;
+    }
+    .template{
+		padding: 2px;
+		// background-color: #e4e8ec;
+		cursor: pointer;
+		-webkit-transition: all 0.5s ease-out;
+        opacity:.6;
+	}
+	.template:hover{
+		background-color: rgb(90, 90, 90);
+        opacity:1;
+	}
+    .vue-progress-path path {
+        stroke-width: 12;
+    }
+    .vue-progress-path .progress {
+        stroke:#00768c;
+    }
+    .vue-progress-path .background {
+        stroke: transparent;
+    }
+</style>
